@@ -1,0 +1,41 @@
+---
+  - name: Update apt-cache
+    apt: update_cache=yes 
+
+  - name: Install git
+    apt: 
+      name:   ['git']
+      state: latest
+
+  - name: check out apiban
+    git: repo=https://github.com/palner/apiban.git
+          dest=/usr/local/src/apiban
+          version=master
+          depth=50
+          accept_hostkey=yes
+          force=yes
+    become: no
+
+  - name: Create a directory
+    file:
+      path: /usr/local/bin/apiban
+      state: directory
+      mode: '0755'
+
+  - name: copy executable
+    shell: cp -r /usr/local/src/apiban/clients/go/apiban-iptables-client /usr/local/bin/apiban && chmod +x /usr/local/bin/apiban/apiban-iptables-client
+
+  - name: Copy config.json
+    template: src=config.json.j2 dest=/usr/local/bin/apiban/config.json mode=0644
+
+  - name: logrotate 
+    copy:
+      src: apiban.logrotate
+      dest: /etc/logrotate.d/apiban-client
+      mode: 0644
+
+  - name: run first time
+    shell: /usr/local/bin/apiban/apiban-iptables-client
+
+  - name: install in crontab
+    shell: echo "*/4 * * * * /usr/local/bin/apiban/apiban-iptables-client >/dev/null 2>&1" | sudo tee -a /etc/crontab
