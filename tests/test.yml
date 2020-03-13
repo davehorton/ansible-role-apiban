@@ -4,4 +4,4 @@
   vars:
     - remove_source: true
   roles:
-    - ansible-role-nodejs
+    - ansible-role-apiban
